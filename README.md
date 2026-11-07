@@ -10,6 +10,6 @@ An end-to-end implementation case for **Nordvale Pharma** (a fictional company):
 |---|---|---|
 | 1. Discovery | [docs/01_discovery.md](docs/01_discovery.md) | done |
 | 2. Solution design | [docs/02_solution_design.md](docs/02_solution_design.md) | done |
-| 3. Automation | workflow/ | next |
-| 4. Test | results/ | planned |
+| 3. Automation | [workflow/](workflow/) (3 n8n workflows) + [data/](data/) (fictional CSV) | done |
+| 4. Test | results/ | next |
 | 5. Implementation docs | docs/03–06 | planned |

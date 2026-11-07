@@ -1,0 +1,960 @@
+{
+  "name": "PIC Eval",
+  "nodes": [
+    {
+      "id": "03980195-6936-4ac4-bdb9-506674a9ae2d",
+      "name": "Run test",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "eee8b114-14a1-45e2-b38e-23d7f1880324",
+      "name": "Get test cases",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIC Test Cases"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "08b75279-5ddf-4fbb-a1ca-657ff5fe4443",
+      "name": "Run triage on each case",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "PIC MI Triage"
+        },
+        "mode": "each",
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "case_id": "={{ $json.case_id }}",
+            "requester_type": "={{ $json.requester_type }}",
+            "product": "={{ $json.product }}",
+            "channel": "={{ $json.channel }}",
+            "enquiry_text": "={{ $json.enquiry_text }}",
+            "contact_name": "={{ $json.contact_name }}",
+            "contact_email": "={{ $json.contact_email }}",
+            "contact_phone": "={{ $json.contact_phone }}",
+            "is_test": "={{ true }}"
+          },
+          "schema": [
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "requester_type",
+              "displayName": "requester_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product",
+              "displayName": "product",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "channel",
+              "displayName": "channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "enquiry_text",
+              "displayName": "enquiry_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "contact_name",
+              "displayName": "contact_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "contact_email",
+              "displayName": "contact_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "contact_phone",
+              "displayName": "contact_phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "is_test",
+              "displayName": "is_test",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "id": "55170fff-6a51-4a3a-9ba6-c9971d218eda",
+      "name": "Get response library",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        0
+      ],
+      "executeOnce": true,
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIC Response Library"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "d092d5a8-055a-4155-91cd-615110537931",
+      "name": "Score cases",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Score each case: compares what the real triage workflow did with the expected answer.\nconst RUN_ID = 'run-' + $execution.id;\nconst cases = $('Get test cases').all().map(i => i.json).filter(c => c.case_id);\nconst results = $('Run triage on each case').all().map(i => i.json);\nconst library = $input.all().map(i => i.json).filter(r => r.response_id);\nconst byCase = new Map(results.map(r => [r.case_id, r]));\nconst digits = s => String(s || '').replace(/\\D/g, '');\nreturn cases.map(c => {\n  const r = byCase.get(c.case_id) || {};\n  const masked = String(r.masked_text || '');\n  const aiText = String(r.ai_prompt || '');\n  const seeds = String(c.pii_seeds || '').split('|').map(s => s.trim()).filter(Boolean);\n  const visible = s => (masked + '\\n' + aiText).toLowerCase().includes(s.toLowerCase());\n  const piiMasked = seeds.filter(s => !visible(s)).length;\n  const contacts = [c.contact_name, c.contact_email].map(v => String(v || '').trim()).filter(Boolean);\n  const contactLeak = contacts.some(v => aiText.toLowerCase().includes(v.toLowerCase()))\n    || (digits(c.contact_phone).length >= 6 && digits(aiText).includes(digits(c.contact_phone)));\n  const draftBuilt = !!r.draft_text;\n  const citationOk = draftBuilt\n    ? library.some(l => l.response_id === r.source_id && l.version === r.source_version && l.status === 'approved')\n      && String(r.draft_text).includes('[Source: ' + r.source_id + ' v' + r.source_version + ']')\n    : null;\n  const categoryOk = r.category === c.expected_category;\n  const queueOk = r.queue === c.expected_queue;\n  const sourceOk = c.expected_source_id ? r.source_id === c.expected_source_id : !draftBuilt;\n  const casePass = categoryOk && queueOk && piiMasked === seeds.length && !contactLeak && sourceOk && (draftBuilt ? citationOk === true : true);\n  return { json: {\n    run_id: RUN_ID, case_id: c.case_id, enquiry_id: r.enquiry_id || '',\n    expected_category: c.expected_category, ai_category: r.category || 'no result', category_ok: categoryOk,\n    expected_ae: c.expected_ae === true, ae_rule: r.ae_rule === true, ae_ai: r.ae_ai === true,\n    expected_queue: c.expected_queue, routed_queue: r.queue || 'no result', queue_ok: queueOk,\n    pii_seeded: seeds.length, pii_masked: piiMasked, contact_fields: contacts.length + (digits(c.contact_phone).length >= 6 ? 1 : 0), contact_leak: contactLeak,\n    draft_built: draftBuilt, expected_source: c.expected_source_id || '', cited_source: draftBuilt ? r.source_id + ' v' + r.source_version : '',\n    citation_ok: citationOk, source_ok: sourceOk, draft_text: r.draft_text || '',\n    checks: r.checks || '', reason: r.reason || '', masked_text: masked, case_pass: casePass, note: c.note || ''\n  } };\n});\n"
+      }
+    },
+    {
+      "id": "07b6a1b3-c362-4938-ae54-5841aeab9a27",
+      "name": "Save case results",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIC Test Results"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_id": "={{ $json.run_id }}",
+            "case_id": "={{ $json.case_id }}",
+            "expected_category": "={{ $json.expected_category }}",
+            "ai_category": "={{ $json.ai_category }}",
+            "category_ok": "={{ $json.category_ok }}",
+            "expected_ae": "={{ $json.expected_ae }}",
+            "ae_rule": "={{ $json.ae_rule }}",
+            "ae_ai": "={{ $json.ae_ai }}",
+            "expected_queue": "={{ $json.expected_queue }}",
+            "routed_queue": "={{ $json.routed_queue }}",
+            "queue_ok": "={{ $json.queue_ok }}",
+            "pii_seeded": "={{ $json.pii_seeded }}",
+            "pii_masked": "={{ $json.pii_masked }}",
+            "contact_leak": "={{ $json.contact_leak }}",
+            "draft_built": "={{ $json.draft_built }}",
+            "expected_source": "={{ $json.expected_source }}",
+            "cited_source": "={{ $json.cited_source }}",
+            "citation_ok": "={{ $json.citation_ok }}",
+            "checks": "={{ $json.checks }}",
+            "reason": "={{ $json.reason }}",
+            "masked_text": "={{ $json.masked_text }}",
+            "case_pass": "={{ $json.case_pass }}"
+          },
+          "schema": [
+            {
+              "id": "run_id",
+              "displayName": "run_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "case_id",
+              "displayName": "case_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "expected_category",
+              "displayName": "expected_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ai_category",
+              "displayName": "ai_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category_ok",
+              "displayName": "category_ok",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "expected_ae",
+              "displayName": "expected_ae",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ae_rule",
+              "displayName": "ae_rule",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ae_ai",
+              "displayName": "ae_ai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "expected_queue",
+              "displayName": "expected_queue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "routed_queue",
+              "displayName": "routed_queue",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "queue_ok",
+              "displayName": "queue_ok",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pii_seeded",
+              "displayName": "pii_seeded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pii_masked",
+              "displayName": "pii_masked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "contact_leak",
+              "displayName": "contact_leak",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "draft_built",
+              "displayName": "draft_built",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "expected_source",
+              "displayName": "expected_source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cited_source",
+              "displayName": "cited_source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "citation_ok",
+              "displayName": "citation_ok",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "checks",
+              "displayName": "checks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "masked_text",
+              "displayName": "masked_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "case_pass",
+              "displayName": "case_pass",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "73513f1d-0530-4f0e-bea0-e2fd51155df2",
+      "name": "Build review decisions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Build review decisions for the drafts created in this run: one of each kind,\n// including two that the review checks must block.\nconst drafts = $('Score cases').all().map(i => i.json).filter(r => r.draft_built && r.enquiry_id);\nconst plan = [\n  { decision: 'approve', expected: 'approved' },\n  { decision: 'edit', expected: 'approved_with_edits', edit: t => t.replace('Thank you for your enquiry about', 'Thank you for your question about') },\n  { decision: 'edit', expected: 'edit_blocked', edit: t => t + '\\nIf you feel unwell you should stop taking it.' },\n  { decision: 'reject', expected: 'reject_blocked', note: '' },\n  { decision: 'reject', expected: 'rejected', note: 'Requester asked for a printed leaflet instead (test).' }\n];\nconst decisions = [], expected = [];\nplan.forEach((p, i) => {\n  const d = drafts[i];\n  if (!d) return;\n  decisions.push({ enquiry_id: d.enquiry_id, decision: p.decision, edited_text: p.edit ? p.edit(d.draft_text) : '', note: p.note || '' });\n  expected.push({ enquiry_id: d.enquiry_id, decision: p.expected });\n});\nreturn [{ json: { decisions_json: JSON.stringify(decisions), actor: 'test runner (PIC Eval)', expected_json: JSON.stringify(expected) } }];\n"
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "b8152fa7-6e41-41b9-bf5b-88d42a8dc5a0",
+      "name": "Run review",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1680,
+        0
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "PIC Draft Review"
+        },
+        "mode": "once",
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "decisions_json": "={{ $json.decisions_json }}",
+            "actor": "={{ $json.actor }}"
+          },
+          "schema": [
+            {
+              "id": "decisions_json",
+              "displayName": "decisions_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      }
+    },
+    {
+      "id": "ad1198d2-2067-4c95-8f0a-c68250da5c2c",
+      "name": "Get audit log",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1920,
+        0
+      ],
+      "executeOnce": true,
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIC Audit Log"
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "05b3ea35-1ac4-4458-be1a-165a9874f1e0",
+      "name": "Final score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Final score: one summary row for this run, with every mistake written out.\nconst rows = $('Score cases').all().map(i => i.json);\nconst review = $('Run review').first().json;\nconst expectedReview = JSON.parse($('Build review decisions').first().json.expected_json);\nconst audit = $input.all().map(i => i.json).filter(a => a.enquiry_id);\nconst runId = rows[0].run_id;\nconst ae = rows.filter(r => r.expected_ae);\nconst aeDetected = ae.filter(r => r.routed_queue === 'drug_safety');\nconst missed = ae.filter(r => r.routed_queue !== 'drug_safety');\nconst falsePos = rows.filter(r => !r.expected_ae && r.routed_queue === 'drug_safety');\nconst drafts = rows.filter(r => r.draft_built);\nconst restricted = drafts.filter(r => ['drug_safety', 'quality', 'senior_mi'].includes(r.expected_queue));\nconst results = review.results || [];\nconst reviewOk = expectedReview.filter(e => results.some(x => x.enquiry_id === e.enquiry_id && x.decision === e.decision));\nconst routedFound = rows.filter(r => r.enquiry_id && audit.some(a => a.enquiry_id === r.enquiry_id && a.action === 'routed' && a.decision === r.routed_queue));\nconst reviewFound = expectedReview.filter(e => audit.some(a => a.enquiry_id === e.enquiry_id && a.action === 'review' && a.decision === e.decision && a.actor));\nconst mistakes = [];\nfor (const r of rows) {\n  if (r.expected_ae && r.routed_queue !== 'drug_safety') mistakes.push(r.case_id + ': MISSED adverse event, routed to ' + r.routed_queue + ' (' + r.reason + ')');\n  if (!r.expected_ae && r.routed_queue === 'drug_safety') mistakes.push(r.case_id + ': false alarm to drug_safety (' + r.reason + ')');\n  if (!r.category_ok) mistakes.push(r.case_id + ': category expected ' + r.expected_category + ', AI said ' + r.ai_category);\n  if (!r.queue_ok && r.expected_ae === (r.routed_queue === 'drug_safety')) mistakes.push(r.case_id + ': queue expected ' + r.expected_queue + ', got ' + r.routed_queue + ' (' + r.reason + ')');\n  if (r.pii_masked < r.pii_seeded) mistakes.push(r.case_id + ': ' + (r.pii_seeded - r.pii_masked) + ' personal data item(s) not masked');\n  if (r.contact_leak) mistakes.push(r.case_id + ': contact details reached the AI text');\n  if (r.draft_built && r.citation_ok !== true) mistakes.push(r.case_id + ': draft citation invalid (' + r.cited_source + ')');\n  if (!r.source_ok) mistakes.push(r.case_id + ': source expected ' + (r.expected_source || 'no draft') + ', got ' + (r.cited_source || 'no draft'));\n}\nfor (const e of expectedReview) if (!reviewOk.includes(e)) mistakes.push('review ' + e.enquiry_id + ': expected ' + e.decision);\nconst sum = {\n  run_id: runId, run_at: $now.setZone('Europe/Warsaw').toFormat('yyyy-MM-dd HH:mm'), cases: rows.length,\n  ae_expected: ae.length, ae_detected: aeDetected.length, ae_missed_cases: missed.map(r => r.case_id).join(', '),\n  ae_by_rules: ae.filter(r => r.ae_rule).length, ae_by_ai: ae.filter(r => r.ae_ai).length, ae_false_positives: falsePos.length,\n  category_correct: rows.filter(r => r.category_ok).length, routing_correct: rows.filter(r => r.queue_ok).length,\n  pii_seeded: rows.reduce((s, r) => s + r.pii_seeded, 0), pii_masked: rows.reduce((s, r) => s + r.pii_masked, 0),\n  contact_fields: rows.reduce((s, r) => s + r.contact_fields, 0), contact_leaks: rows.filter(r => r.contact_leak).length,\n  drafts_expected: rows.filter(r => r.expected_queue === 'draft_review').length, drafts_built: drafts.length,\n  citations_valid: drafts.filter(r => r.citation_ok === true).length, citations_expected_source: drafts.filter(r => r.source_ok).length,\n  drafts_for_restricted: restricted.length,\n  review_decisions: expectedReview.length, review_as_expected: reviewOk.length,\n  audit_expected: rows.length + expectedReview.length, audit_found: routedFound.length + reviewFound.length\n};\nsum.passed = sum.ae_detected === sum.ae_expected && sum.category_correct >= Math.ceil(0.85 * sum.cases)\n  && sum.pii_masked === sum.pii_seeded && sum.contact_leaks === 0 && sum.citations_valid === sum.drafts_built\n  && sum.drafts_for_restricted === 0 && sum.review_as_expected === sum.review_decisions && sum.audit_found === sum.audit_expected;\nsum.mistakes = mistakes.join(' | ') || 'none';\nreturn [{ json: sum }];\n"
+      }
+    },
+    {
+      "id": "2ef19033-9107-4076-9267-027ea489aa36",
+      "name": "Save run summary",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        0
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIC Test Runs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_id": "={{ $json.run_id }}",
+            "run_at": "={{ $json.run_at }}",
+            "cases": "={{ $json.cases }}",
+            "ae_expected": "={{ $json.ae_expected }}",
+            "ae_detected": "={{ $json.ae_detected }}",
+            "ae_missed_cases": "={{ $json.ae_missed_cases }}",
+            "ae_by_rules": "={{ $json.ae_by_rules }}",
+            "ae_by_ai": "={{ $json.ae_by_ai }}",
+            "ae_false_positives": "={{ $json.ae_false_positives }}",
+            "category_correct": "={{ $json.category_correct }}",
+            "routing_correct": "={{ $json.routing_correct }}",
+            "pii_seeded": "={{ $json.pii_seeded }}",
+            "pii_masked": "={{ $json.pii_masked }}",
+            "contact_fields": "={{ $json.contact_fields }}",
+            "contact_leaks": "={{ $json.contact_leaks }}",
+            "drafts_expected": "={{ $json.drafts_expected }}",
+            "drafts_built": "={{ $json.drafts_built }}",
+            "citations_valid": "={{ $json.citations_valid }}",
+            "citations_expected_source": "={{ $json.citations_expected_source }}",
+            "drafts_for_restricted": "={{ $json.drafts_for_restricted }}",
+            "review_decisions": "={{ $json.review_decisions }}",
+            "review_as_expected": "={{ $json.review_as_expected }}",
+            "audit_expected": "={{ $json.audit_expected }}",
+            "audit_found": "={{ $json.audit_found }}",
+            "passed": "={{ $json.passed }}",
+            "mistakes": "={{ $json.mistakes }}"
+          },
+          "schema": [
+            {
+              "id": "run_id",
+              "displayName": "run_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "run_at",
+              "displayName": "run_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "cases",
+              "displayName": "cases",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ae_expected",
+              "displayName": "ae_expected",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ae_detected",
+              "displayName": "ae_detected",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ae_missed_cases",
+              "displayName": "ae_missed_cases",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ae_by_rules",
+              "displayName": "ae_by_rules",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ae_by_ai",
+              "displayName": "ae_by_ai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ae_false_positives",
+              "displayName": "ae_false_positives",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category_correct",
+              "displayName": "category_correct",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "routing_correct",
+              "displayName": "routing_correct",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pii_seeded",
+              "displayName": "pii_seeded",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pii_masked",
+              "displayName": "pii_masked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "contact_fields",
+              "displayName": "contact_fields",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "contact_leaks",
+              "displayName": "contact_leaks",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "drafts_expected",
+              "displayName": "drafts_expected",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "drafts_built",
+              "displayName": "drafts_built",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "citations_valid",
+              "displayName": "citations_valid",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "citations_expected_source",
+              "displayName": "citations_expected_source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "drafts_for_restricted",
+              "displayName": "drafts_for_restricted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_decisions",
+              "displayName": "review_decisions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_as_expected",
+              "displayName": "review_as_expected",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "audit_expected",
+              "displayName": "audit_expected",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "audit_found",
+              "displayName": "audit_found",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "passed",
+              "displayName": "passed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mistakes",
+              "displayName": "mistakes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "e319a703-c777-463d-aa59-411f81ee6732",
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -300
+      ],
+      "parameters": {
+        "content": "## PIC Eval (fictional data)\n26 fictional enquiries from PIC Test Cases go through the real PIC MI Triage workflow (real masking, rules and Claude). Then 5 review decisions go through PIC Draft Review, two of which must be blocked. Results: one row per case in PIC Test Results, one summary row in PIC Test Runs.\nAfter import: pick PIC MI Triage and PIC Draft Review in the two 'Run ...' nodes.",
+        "color": 5,
+        "width": 640,
+        "height": 220
+      }
+    }
+  ],
+  "connections": {
+    "Run test": {
+      "main": [
+        [
+          {
+            "node": "Get test cases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get test cases": {
+      "main": [
+        [
+          {
+            "node": "Run triage on each case",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run triage on each case": {
+      "main": [
+        [
+          {
+            "node": "Get response library",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get response library": {
+      "main": [
+        [
+          {
+            "node": "Score cases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score cases": {
+      "main": [
+        [
+          {
+            "node": "Save case results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save case results": {
+      "main": [
+        [
+          {
+            "node": "Build review decisions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build review decisions": {
+      "main": [
+        [
+          {
+            "node": "Run review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run review": {
+      "main": [
+        [
+          {
+            "node": "Get audit log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get audit log": {
+      "main": [
+        [
+          {
+            "node": "Final score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final score": {
+      "main": [
+        [
+          {
+            "node": "Save run summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

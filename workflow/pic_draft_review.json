@@ -1,0 +1,804 @@
+{
+  "name": "PIC Draft Review",
+  "nodes": [
+    {
+      "id": "e6bd2941-8f92-4287-9165-e510ef3a50a0",
+      "name": "Open draft review",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "a177c3fd-eeb2-4279-be86-75d3e1a6424b",
+      "parameters": {
+        "authentication": "n8nUserAuth",
+        "formTitle": "Nordvale Pharma — draft review (fictional)",
+        "formDescription": "Portfolio demo. Approve, reject or edit drafts built from approved standard responses. Nothing is sent to requesters.",
+        "formFields": {
+          "values": [
+            {
+              "fieldType": "html",
+              "elementName": "intro",
+              "html": "<p>Open the drafts waiting for review.</p>"
+            }
+          ]
+        },
+        "responseMode": "onReceived",
+        "options": {
+          "buttonLabel": "Show drafts",
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "f69130d9-bbee-4c2c-92d5-6ecdde8c1889",
+      "name": "When called by test",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "decisions_json",
+              "type": "string"
+            },
+            {
+              "name": "actor",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "d6487b61-f1ed-4264-bc8f-efd13eba8584",
+      "name": "Get drafts to review",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        0
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIC Queue"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "pending_review"
+            }
+          ]
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "f94d09c8-a4ca-4f64-94b5-5129b5a06b99",
+      "name": "Build review page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Build review page: one card per draft waiting for review, with a decision, an editable text and a note.\nconst rows = $input.all().map(i => i.json).filter(r => r.id && r.status === 'pending_review');\nif (!rows.length) return [{ json: { has_pending: false, pending_count: 0 } }];\n// Text from the table or the AI is shown as plain text, never as HTML.\nconst escapeHtml = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/\\n/g, '<br>');\nconst formFields = rows.flatMap(r => [\n  { fieldType: 'html', elementName: 'card_' + r.id, html: [\n    '<hr>',\n    '<h3>' + escapeHtml(r.enquiry_id) + ' (' + escapeHtml(r.product) + ', ' + escapeHtml(r.requester_type) + ')</h3>',\n    '<p><b>Enquiry (masked):</b> ' + escapeHtml(r.masked_text) + '</p>',\n    '<p><b>Why this queue:</b> ' + escapeHtml(r.rationale) + '</p>',\n    '<p><b>Source:</b> ' + escapeHtml(r.source_id) + ' v' + escapeHtml(r.source_version) + ' &nbsp; <b>Checks:</b> ' + escapeHtml(r.checks) + '</p>',\n    '<p><b>Draft:</b><br>' + escapeHtml(r.draft_text) + '</p>'\n  ].join('') },\n  { fieldLabel: 'Decision for ' + r.enquiry_id, fieldName: 'decision_' + r.id, fieldType: 'dropdown', requiredField: true, defaultValue: 'keep pending',\n    fieldOptions: { values: [{ option: 'keep pending' }, { option: 'approve' }, { option: 'reject' }, { option: 'edit' }] } },\n  { fieldLabel: 'Edited text for ' + r.enquiry_id + ' (only used with \"edit\"; keep the [Source: ...] line)', fieldName: 'edit_' + r.id, fieldType: 'textarea', defaultValue: r.draft_text, requiredField: false },\n  { fieldLabel: 'Note for ' + r.enquiry_id + ' (required when rejecting)', fieldName: 'note_' + r.id, fieldType: 'text', requiredField: false }\n]);\nreturn [{ json: { has_pending: true, pending_count: rows.length, row_ids: rows.map(r => r.id), form_fields: formFields } }];\n"
+      }
+    },
+    {
+      "id": "5d4de356-70be-4976-9f00-49202f638596",
+      "name": "Anything to review?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.has_pending }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b46a6d48-48a8-46a7-a064-594ea35d4923",
+      "name": "Review drafts",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        960,
+        -80
+      ],
+      "webhookId": "023f8e34-1284-4fc8-970f-5f51f760e225",
+      "parameters": {
+        "operation": "page",
+        "defineForm": "json",
+        "jsonOutput": "={{ $json.form_fields }}",
+        "options": {
+          "formTitle": "Drafts waiting for review",
+          "formDescription": "Approve only what you would send yourself. Approved means ready to send by a human; nothing is sent from here.",
+          "buttonLabel": "Save decisions",
+          "appendAttribution": false
+        }
+      }
+    },
+    {
+      "id": "824a8466-3516-4e94-8118-78a6ddd7afad",
+      "name": "Nothing to review",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        960,
+        100
+      ],
+      "webhookId": "7365b1cb-e9b6-43c1-afb0-ad6ec84d6dec",
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Nothing to review",
+        "completionMessage": "There are no drafts waiting for review."
+      }
+    },
+    {
+      "id": "ffb74348-8bca-4bb4-b549-968e343a6828",
+      "name": "Collect decisions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Collect decisions: one list of decisions, whether they came from the review form or from the test workflow.\nconst j = $input.first().json;\nlet source, actor, decisions = [];\nif (j.decisions_json !== undefined) {\n  source = 'test';\n  actor = String(j.actor || 'test runner');\n  try { decisions = JSON.parse(j.decisions_json); } catch (err) { decisions = []; }\n} else {\n  source = 'form';\n  // The review form requires an n8n login; the trigger passes the signed-in user.\n  let user = {};\n  try { const t = $('Open draft review').first().json; user = t.user || t.n8nUser || {}; } catch (err) { user = {}; }\n  actor = 'n8n user: ' + (user.email || user.id || [user.firstName, user.lastName].filter(Boolean).join(' ') || 'unknown');\n  let ids = [];\n  try { ids = $('Build review page').first().json.row_ids || []; } catch (err) { ids = []; }\n  decisions = ids.map(id => ({\n    row_id: id,\n    decision: j['decision_' + id] ?? 'keep pending',\n    edited_text: j['edit_' + id] ?? '',\n    note: j['note_' + id] ?? ''\n  }));\n}\nreturn [{ json: { source, actor, decisions } }];\n"
+      }
+    },
+    {
+      "id": "66d9124a-bd34-4b4e-95da-518de14f53b6",
+      "name": "Load current drafts",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        200
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIC Queue"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "pending_review"
+            }
+          ]
+        },
+        "returnAll": true
+      }
+    },
+    {
+      "id": "2a282a5b-f331-4661-88a9-abe153849ffd",
+      "name": "Check decisions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Check decisions: validate each decision against the current queue row before anything is saved.\n// An edit must keep the [Source: ...] line, contain no forbidden phrases and no personal data.\nconst REVIEW_VERSION = 'pic-draft-review v1.0';\nconst FORBIDDEN = [\n  /\\byou should (take|stop|start|increase|decrease|use|apply)\\b/i, /\\bstop taking\\b/i,\n  /\\b(increase|decrease|double|halve) (your|the) dose\\b/i, /\\bsafe for you\\b/i, /\\bcompletely safe\\b/i,\n  /\\b100% safe\\b/i, /\\bno side effects\\b/i, /\\bguarantee/i, /\\bcures?\\b/i, /\\bI recommend\\b/i,\n  /\\bwe recommend\\b/i, /\\bin my opinion\\b/i, /\\bdiagnos/i, /\\bno need to see (a|your) doctor\\b/i\n];\nconst PII = [/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i, /(?<![\\w-])\\d{6,}(?![\\w-])/];\nconst c = $('Collect decisions').first().json;\nconst rows = $input.all().map(i => i.json).filter(r => r.id);\nconst byRowId = new Map(rows.map(r => [String(r.id), r]));\nconst byEnquiry = new Map(rows.map(r => [r.enquiry_id, r]));\nconst now = $now.toISO();\nconst out = [];\nfor (const d of c.decisions || []) {\n  const choice = String(d.decision || 'keep pending').trim();\n  if (choice === 'keep pending') continue;\n  const row = d.row_id !== undefined ? byRowId.get(String(d.row_id)) : byEnquiry.get(d.enquiry_id);\n  const note = String(d.note || '').trim();\n  const base = { actor: c.actor, at: now, note, review_version: REVIEW_VERSION };\n  if (!row) { out.push({ json: { ...base, valid: false, enquiry_id: d.enquiry_id || String(d.row_id), row_id: null, decision: 'not_found', new_status: '', final_text: '', source_id: '', source_version: '', reason: 'no draft waiting for review with this id' } }); continue; }\n  const citation = '[Source: ' + row.source_id + ' v' + row.source_version + ']';\n  let valid = true, decision = choice, newStatus = 'pending_review', text = row.draft_text, reason = '';\n  if (choice === 'approve') { decision = 'approved'; newStatus = 'approved'; reason = 'ready for a human to send from the MI mailbox'; }\n  else if (choice === 'reject') {\n    if (!note) { valid = false; decision = 'reject_blocked'; reason = 'a reason is required to reject'; }\n    else { decision = 'rejected'; newStatus = 'rejected'; reason = 'rejected by reviewer'; }\n  } else if (choice === 'edit') {\n    const edited = String(d.edited_text || '').trim();\n    const problems = [];\n    if (!edited) problems.push('empty text');\n    if (!edited.includes(citation)) problems.push('source line ' + citation + ' missing or changed');\n    const bad = FORBIDDEN.filter(re => re.test(edited));\n    if (bad.length) problems.push('forbidden phrase');\n    if (PII.some(re => re.test(edited))) problems.push('personal data');\n    if (problems.length) { valid = false; decision = 'edit_blocked'; reason = problems.join('; '); }\n    else { decision = 'approved_with_edits'; newStatus = 'approved'; text = edited; reason = 'edited and approved; ready for a human to send'; }\n  } else { valid = false; decision = 'unknown_decision'; reason = 'unknown decision: ' + choice; }\n  out.push({ json: { ...base, valid, enquiry_id: row.enquiry_id, row_id: row.id, decision, new_status: newStatus, final_text: text, source_id: row.source_id, source_version: row.source_version, reason } });\n}\nif (!out.length) return [{ json: { nothing: true } }];\nreturn out;\n"
+      }
+    },
+    {
+      "id": "5cb9df22-5b49-4d6d-b655-d8303913203f",
+      "name": "Any decisions?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1920,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.nothing === true }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d36bbe2d-1945-4f78-ac66-d2ddd26405d7",
+      "name": "Decision valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2160,
+        120
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "9c5c9414-516c-48d2-ab64-cec9c15444c1",
+      "name": "Update queue row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        40
+      ],
+      "alwaysOutputData": true,
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIC Queue"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.row_id }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "pending_review"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.new_status }}",
+            "draft_text": "={{ $json.final_text }}",
+            "reviewed_by": "={{ $json.actor }}",
+            "reviewed_at": "={{ $json.at }}",
+            "review_note": "={{ $json.note }}"
+          },
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "draft_text",
+              "displayName": "draft_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reviewed_by",
+              "displayName": "reviewed_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reviewed_at",
+              "displayName": "reviewed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_note",
+              "displayName": "review_note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "0c7b4205-19ee-410e-9af6-e977caf3bd79",
+      "name": "Write review to audit log",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2640,
+        120
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "PIC Audit Log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "enquiry_id": "={{ $('Check decisions').item.json.enquiry_id }}",
+            "at": "={{ $('Check decisions').item.json.at }}",
+            "actor": "={{ $('Check decisions').item.json.actor }}",
+            "action": "review",
+            "decision": "={{ $('Check decisions').item.json.decision }}",
+            "source_id": "={{ $('Check decisions').item.json.source_id }}",
+            "source_version": "={{ $('Check decisions').item.json.source_version }}",
+            "detail": "=reason={{ $('Check decisions').item.json.reason }}; note={{ $('Check decisions').item.json.note }}",
+            "workflow_version": "={{ $('Check decisions').item.json.review_version }}"
+          },
+          "schema": [
+            {
+              "id": "enquiry_id",
+              "displayName": "enquiry_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "at",
+              "displayName": "at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "actor",
+              "displayName": "actor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "action",
+              "displayName": "action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "decision",
+              "displayName": "decision",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source_id",
+              "displayName": "source_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source_version",
+              "displayName": "source_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "detail",
+              "displayName": "detail",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "workflow_version",
+              "displayName": "workflow_version",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ca0a115b-8338-4f0d-b3bc-04d6b577d8d2",
+      "name": "Summarize decisions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        200
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Summarize decisions for the reviewer (or the test). Nothing is sent anywhere.\nconst items = $('Check decisions').all().map(i => i.json).filter(r => !r.nothing);\nconst count = d => items.filter(r => r.decision === d).length;\nreturn [{ json: {\n  source: $('Collect decisions').first().json.source,\n  results: items.map(r => ({ enquiry_id: r.enquiry_id, decision: r.decision, valid: r.valid, reason: r.reason })),\n  summary: 'Approved: ' + count('approved') + ', approved with edits: ' + count('approved_with_edits') + ', rejected: ' + count('rejected') +\n    ', blocked: ' + items.filter(r => !r.valid).length + '. Nothing was sent. Approved means ready for a human to send.'\n} }];\n"
+      },
+      "executeOnce": true
+    },
+    {
+      "id": "7dc83616-d39e-4bea-872b-b6ae3e56e58c",
+      "name": "From the form?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3120,
+        200
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.source }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "form"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "3ca61a66-28a7-4d10-8643-44fe9af5f060",
+      "name": "Decisions saved",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        3360,
+        120
+      ],
+      "webhookId": "b7707699-78ed-4779-8f0e-1c50eec7fab7",
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "text",
+        "completionTitle": "Decisions saved",
+        "completionMessage": "={{ $json.summary }}"
+      }
+    },
+    {
+      "id": "70a3b6c8-91b1-41af-953e-970e3fdadc54",
+      "name": "Return to test",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3360,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Hands the decision results back to the test workflow.\nreturn [{ json: $input.first().json }];"
+      }
+    },
+    {
+      "id": "a8b87b23-a62a-4dd7-bbc2-16ce214234d5",
+      "name": "Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -320
+      ],
+      "parameters": {
+        "content": "## PIC Draft Review (fictional Nordvale Pharma)\nOnly drafts in PIC Queue with status pending_review are shown. The form needs an n8n login, so the audit log records who decided. Edits must keep the [Source: ...] line and pass the same forbidden-phrase and personal-data checks. Approved means ready for a human to send; nothing is sent from here.",
+        "color": 4,
+        "width": 640,
+        "height": 220
+      }
+    }
+  ],
+  "connections": {
+    "Open draft review": {
+      "main": [
+        [
+          {
+            "node": "Get drafts to review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get drafts to review": {
+      "main": [
+        [
+          {
+            "node": "Build review page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build review page": {
+      "main": [
+        [
+          {
+            "node": "Anything to review?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anything to review?": {
+      "main": [
+        [
+          {
+            "node": "Review drafts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nothing to review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review drafts": {
+      "main": [
+        [
+          {
+            "node": "Collect decisions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When called by test": {
+      "main": [
+        [
+          {
+            "node": "Collect decisions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect decisions": {
+      "main": [
+        [
+          {
+            "node": "Load current drafts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load current drafts": {
+      "main": [
+        [
+          {
+            "node": "Check decisions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check decisions": {
+      "main": [
+        [
+          {
+            "node": "Any decisions?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any decisions?": {
+      "main": [
+        [
+          {
+            "node": "Decision valid?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Summarize decisions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision valid?": {
+      "main": [
+        [
+          {
+            "node": "Update queue row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Write review to audit log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update queue row": {
+      "main": [
+        [
+          {
+            "node": "Write review to audit log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write review to audit log": {
+      "main": [
+        [
+          {
+            "node": "Summarize decisions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize decisions": {
+      "main": [
+        [
+          {
+            "node": "From the form?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "From the form?": {
+      "main": [
+        [
+          {
+            "node": "Decisions saved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return to test",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
