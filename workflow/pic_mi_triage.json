@@ -2,7 +2,7 @@
   "name": "PIC MI Triage",
   "nodes": [
     {
-      "id": "2419bc1b-24e1-4272-a908-4ed8c6d57a12",
+      "id": "565be3c4-5057-4020-b333-e164acf6156e",
       "name": "Enquiry form",
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2.6,
@@ -10,7 +10,7 @@
         0,
         0
       ],
-      "webhookId": "2b0ced88-70d0-4822-8f27-d1fed556f018",
+      "webhookId": "1c677a33-ce3e-4f88-b479-a956e6b4b388",
       "parameters": {
         "formTitle": "Nordvale Pharma — Medical Information enquiry (fictional)",
         "formDescription": "Portfolio demo on a fictional company. Do not enter real personal or health data. Nothing is sent back automatically.",
@@ -99,7 +99,7 @@
       }
     },
     {
-      "id": "c7665331-0acc-43ff-b57f-cdefdfc91bc3",
+      "id": "f02d6b57-8211-499e-90bc-d45996327169",
       "name": "When called by test",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.3,
@@ -152,7 +152,7 @@
       }
     },
     {
-      "id": "de8b8c2a-6a44-40f0-90b4-7cba3665d989",
+      "id": "095708d1-1393-433d-b806-26db93ca86f8",
       "name": "Normalize enquiry",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -166,7 +166,7 @@
       }
     },
     {
-      "id": "fa26e07c-5861-47e1-a6b9-c6e0a842f546",
+      "id": "10e62f9d-8721-4828-83a7-4ef170f6e2b0",
       "name": "Save intake (contact details)",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -283,7 +283,7 @@
       }
     },
     {
-      "id": "de4fcb54-de15-490b-87e1-3161c7676cdb",
+      "id": "bffe646c-65df-4d0b-94e6-4aa7651473d9",
       "name": "Mask personal data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -297,7 +297,7 @@
       }
     },
     {
-      "id": "86334ba7-e6d3-43dc-b499-a70a8a6a21d6",
+      "id": "53f7994a-c0ef-4377-a916-28ca405b9362",
       "name": "Check masking",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -311,7 +311,7 @@
       }
     },
     {
-      "id": "7e41d7f0-b60b-4d24-a54c-06b79a595897",
+      "id": "67345dec-5e28-4173-b986-3fd08c6c2161",
       "name": "AE keyword rules",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -325,7 +325,7 @@
       }
     },
     {
-      "id": "b9262ebc-e163-46d5-8393-486492bab730",
+      "id": "7d4b7da7-8460-4bf0-9ba6-c16d000d8f7c",
       "name": "Clean for AI?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -357,7 +357,7 @@
       }
     },
     {
-      "id": "f3449d98-c201-48f1-9fc9-5b235e860108",
+      "id": "4e1b84c4-c339-4369-b7b3-a21269eda8f0",
       "name": "Get response library",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -378,7 +378,7 @@
       }
     },
     {
-      "id": "203834a5-5565-4967-8f74-5c13e328ad48",
+      "id": "433eea9c-8ee7-423e-9237-bdd7b44e1f57",
       "name": "Build AI request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -392,7 +392,7 @@
       }
     },
     {
-      "id": "d77906fb-337d-4f71-abfc-69e8fe8e55d7",
+      "id": "385f27a4-62cc-4ecb-8423-00567aa4f855",
       "name": "Classify with Claude",
       "type": "@n8n/n8n-nodes-langchain.anthropic",
       "typeVersion": 1,
@@ -429,7 +429,7 @@
       }
     },
     {
-      "id": "3c249ae9-7fbd-4600-a98e-3249c93b8419",
+      "id": "98c11337-c993-461c-ae71-5399811d4353",
       "name": "Route enquiry",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -443,7 +443,7 @@
       }
     },
     {
-      "id": "0975f9f0-dc07-4464-8185-ab3b4095320b",
+      "id": "fda5c82d-6002-4fc1-89bf-153e4ed14606",
       "name": "Save to queue",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -670,7 +670,7 @@
       }
     },
     {
-      "id": "0b3e1823-703f-43e0-9328-4789c5e58b8f",
+      "id": "3252279e-5998-4a52-ba24-3b8ab3c288e7",
       "name": "Write audit log",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -787,7 +787,7 @@
       }
     },
     {
-      "id": "5e0bcae0-2ee5-4799-8b0b-c7ede470c747",
+      "id": "4efcbdaf-741c-4269-8d5a-6d588ab12526",
       "name": "Return result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -801,7 +801,7 @@
       }
     },
     {
-      "id": "c1a9c908-352c-4708-8000-1584b6fac8d2",
+      "id": "2e7fc171-615b-43bc-a78e-cc0919e63f43",
       "name": "Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,

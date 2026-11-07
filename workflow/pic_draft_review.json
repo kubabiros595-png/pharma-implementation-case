@@ -2,7 +2,7 @@
   "name": "PIC Draft Review",
   "nodes": [
     {
-      "id": "78b19b0b-c369-427c-9db0-7dbbd7d8ac29",
+      "id": "951ee790-1cd2-4bea-8d76-fecfd57a3529",
       "name": "Open draft review",
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2.6,
@@ -10,7 +10,7 @@
         0,
         0
       ],
-      "webhookId": "ea0f5083-afdd-4fb8-bf94-b621de2b2702",
+      "webhookId": "93b4af00-d059-4db5-bdf0-21a4cf5b58d8",
       "parameters": {
         "authentication": "n8nUserAuth",
         "formTitle": "Nordvale Pharma — draft review (fictional)",
@@ -32,7 +32,7 @@
       }
     },
     {
-      "id": "63971657-03ff-46dd-8732-24765a63b09f",
+      "id": "7ae1beb6-1577-4e31-8d6a-c76fd2adbdb0",
       "name": "When called by test",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.3,
@@ -57,7 +57,7 @@
       }
     },
     {
-      "id": "edc8a12d-71bf-4f6d-a5cc-41b847e1a6af",
+      "id": "500d17d4-dea3-4674-b6e0-3e38173422d3",
       "name": "Get drafts to review",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -88,7 +88,7 @@
       }
     },
     {
-      "id": "271b3825-f30b-4493-92df-55cc1d99f4d5",
+      "id": "cf7dd709-3ca5-473b-9f72-4021d2762e0f",
       "name": "Build review page",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -102,7 +102,7 @@
       }
     },
     {
-      "id": "c354075b-511c-41bf-8145-3d4b12a30f86",
+      "id": "5d02e351-e93d-4692-9d70-bbfe113bbbdc",
       "name": "Anything to review?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -134,7 +134,7 @@
       }
     },
     {
-      "id": "512f1456-58bb-4fb6-92ea-1c72d451a7f8",
+      "id": "ea61f17c-688f-4178-8ed8-1f1a0cacc311",
       "name": "Review drafts",
       "type": "n8n-nodes-base.form",
       "typeVersion": 2.5,
@@ -142,7 +142,7 @@
         960,
         -80
       ],
-      "webhookId": "8cac1e0f-11e2-4447-beb7-4635b45a5347",
+      "webhookId": "f23127c9-f8b5-4eb8-8b80-e7edab27acf2",
       "parameters": {
         "operation": "page",
         "defineForm": "json",
@@ -156,7 +156,7 @@
       }
     },
     {
-      "id": "3b6dd1d4-4883-45b7-a2e2-c37b32cdb254",
+      "id": "72bbd5d6-4ac5-40e2-a64f-11ae03778511",
       "name": "Nothing to review",
       "type": "n8n-nodes-base.form",
       "typeVersion": 2.5,
@@ -164,7 +164,7 @@
         960,
         100
       ],
-      "webhookId": "c48f5bbb-ea47-43a2-972c-6b4e34c00349",
+      "webhookId": "2a8875df-3458-4672-9e68-a8693eccc70f",
       "parameters": {
         "operation": "completion",
         "respondWith": "text",
@@ -173,7 +173,7 @@
       }
     },
     {
-      "id": "8f7de7f0-789c-484f-8491-ce050f7642a5",
+      "id": "4fab3121-5e77-4768-862e-686e41c0b0bc",
       "name": "Collect decisions",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -187,7 +187,7 @@
       }
     },
     {
-      "id": "e1af4906-b388-4959-af58-ff1b26de6ad6",
+      "id": "c316d7f6-6603-4d8e-b880-90c57e2fa281",
       "name": "Load current drafts",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -219,7 +219,7 @@
       }
     },
     {
-      "id": "0f13b6f8-c87a-4c43-90a9-e2a71505d153",
+      "id": "71fca787-024b-4af1-b599-05bd1816dc40",
       "name": "Check decisions",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -233,7 +233,7 @@
       }
     },
     {
-      "id": "26b566d4-2db9-4ca4-9d3a-46669dbbd329",
+      "id": "24f0f442-c735-4420-abf9-76ea6ee1bf75",
       "name": "Any decisions?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -265,7 +265,7 @@
       }
     },
     {
-      "id": "36681e61-17ba-4420-a601-39afed3b250d",
+      "id": "f33129ed-11ef-4237-8252-4871ca96142c",
       "name": "Decision valid?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -297,7 +297,7 @@
       }
     },
     {
-      "id": "2f765532-4a8a-4582-974b-beed09a0af29",
+      "id": "2565c360-9c19-429d-9bb9-a564b525aeb2",
       "name": "Update queue row",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -389,7 +389,7 @@
       }
     },
     {
-      "id": "0c33a5a1-f73e-4314-88d8-23cab804c1a1",
+      "id": "da97f0be-c4e5-4cae-803a-0b05f6b090a8",
       "name": "Write review to audit log",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -506,7 +506,7 @@
       }
     },
     {
-      "id": "385e60a9-dbca-472d-bc43-31536fac8a55",
+      "id": "0aa337d0-b201-4f30-947f-2788c2024c71",
       "name": "Summarize decisions",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -521,7 +521,7 @@
       "executeOnce": true
     },
     {
-      "id": "73b608fd-5751-4cbe-86a9-fb2fe401e77f",
+      "id": "df6798d6-4b95-4214-b8b8-5c94a80b88db",
       "name": "From the form?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -552,7 +552,7 @@
       }
     },
     {
-      "id": "4bee4b74-44b6-4c66-9859-ab9dc57226a9",
+      "id": "bdc72540-b8f3-48a7-8d7c-d277ccdb9eb9",
       "name": "Decisions saved",
       "type": "n8n-nodes-base.form",
       "typeVersion": 2.5,
@@ -560,7 +560,7 @@
         3360,
         120
       ],
-      "webhookId": "47d25ff7-d499-4b9e-be6c-66b7b247f428",
+      "webhookId": "33d06636-1755-482c-86dd-24e0dd3ae302",
       "parameters": {
         "operation": "completion",
         "respondWith": "text",
@@ -569,7 +569,7 @@
       }
     },
     {
-      "id": "ee112b63-1b86-4ca8-a8a0-b2c83a316b65",
+      "id": "f1018d96-6a03-491a-90f0-300ed018de25",
       "name": "Return to test",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -583,7 +583,7 @@
       }
     },
     {
-      "id": "f76d83b4-de9b-40bb-9332-f57526066a1a",
+      "id": "c28c734b-7844-481f-806c-05da5b64c706",
       "name": "Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,

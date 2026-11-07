@@ -13,25 +13,27 @@ Every run goes through the real workflow: real masking code, real keyword rules 
 
 ## Results
 
-| Metric | Target | Run 1 (`run-124`, workflow v1.0) | Run 2 (`run-152`, workflow v1.1) |
-|---|---|---|---|
-| Possible AEs routed to Drug Safety | 100% | **7 / 7** | **7 / 7** |
-| …caught by keyword rules alone | — | 7 / 7 | 7 / 7 |
-| …caught by Claude alone | — | 7 / 7 | 7 / 7 |
-| False alarms to Drug Safety | as few as possible | 0 | 1 (OL-04) |
-| Classification accuracy (5 categories) | ≥ 85% | 25 / 26 (96%) | 26 / 26 (100%) |
-| Routed to the expected queue | — | 25 / 26 | 25 / 26 |
-| Planted personal data masked before AI | 100% | 10 / 10 | 10 / 10 |
-| Contact fields that reached the AI text | 0 | 0 of 47 | 0 of 47 |
-| Drafts built (expected 10) | 10 | 10 | 10 |
-| Drafts citing an existing, approved ID + version | 100% | 10 / 10 | 10 / 10 |
-| Drafts citing the expected response | — | 10 / 10 | 10 / 10 |
-| Drafts for AE, complaint or off-label enquiries | 0 | 0 | 0 |
-| Review decisions handled as expected | 5 / 5 | 5 / 5 | 5 / 5 |
-| Audit log rows found / expected | 100% | 31 / 31 | 31 / 31 |
-| Overall pass (all targets) | — | pass | pass |
+| Metric | Target | Run 1 (`run-124`, v1.0) | Run 2 (`run-152`, v1.1) | Run 3 (`run-180`, v1.1, test set v2) |
+|---|---|---|---|---|
+| Possible AEs routed to Drug Safety | 100% | **7 / 7** | **7 / 7** | **7 / 7** |
+| …caught by keyword rules alone | — | 7 / 7 | 7 / 7 | 7 / 7 |
+| …caught by Claude alone | — | 7 / 7 | 7 / 7 | 7 / 7 |
+| False alarms to Drug Safety | as few as possible | 0 | 1 (OL-04) | 0 |
+| Classification accuracy (5 categories) | ≥ 85% | 25 / 26 (96%) | 26 / 26 (100%) | 26 / 26 (100%) |
+| Routed to the expected queue | — | 25 / 26 | 25 / 26 | 26 / 26 |
+| Planted personal data masked before AI | 100% | 10 / 10 | 10 / 10 | 10 / 10 |
+| Contact fields that reached the AI text | 0 | 0 of 47 | 0 of 47 | 0 of 47 |
+| Drafts built (expected 10) | 10 | 10 | 10 | 10 |
+| Drafts citing an existing, approved ID + version | 100% | 10 / 10 | 10 / 10 | 10 / 10 |
+| Drafts citing the expected response | — | 10 / 10 | 10 / 10 | 10 / 10 |
+| Drafts for AE, complaint or off-label enquiries | 0 | 0 | 0 | 0 |
+| Review decisions handled as expected | 5 / 5 | 5 / 5 | 5 / 5 | 5 / 5 |
+| Audit log rows found / expected | 100% | 31 / 31 | 31 / 31 | 31 / 31 |
+| Overall pass (all targets) | — | pass | pass | pass |
 
-**No adverse event was missed in either run.**
+**No adverse event was missed in any run.**
+
+**Test set v2 (run 3).** Before run 3, case AE-02 was reworded: it mentioned a real active substance, which breaks the rule that the case uses no real medicines. "…taken together with [real substance]" became "…taken together with a painkiller from the pharmacy". The 25 other cases are unchanged. Runs 1–2 used test set v1; run 3 used v2 (n8n table `PIC Test Cases`; v1 kept as `PIC Test Cases v1 (superseded)`).
 
 ## Every deviation, explained
 
@@ -39,13 +41,15 @@ Every run goes through the real workflow: real masking code, real keyword rules 
 Claude classified it correctly as a product complaint, but replied with two JSON blocks (the second one prefixed with "Correction: returning the required JSON only"). The v1.0 parser expected exactly one block, rejected the reply and routed the enquiry to the MI human queue with reason `ai_invalid_output`. This is the fail-safe working as designed: nothing was lost, a person would have picked it up.
 *Fix (v1.1):* the parser now extracts every JSON block. It accepts them only if they agree on the category; if any block flags an adverse event, the flag wins; if blocks cite different response IDs, no draft is built. Unit-tested on the exact failing reply before re-running.
 
+**Run 3 — no deviations.** All 26 cases matched the expected category and queue.
+
 **Run 2 — OL-04 (off-label dose question) went to Drug Safety instead of the senior MI reviewer.**
-The text: *"Can I take twice the normal dose of Brenquilo if my cough is really bad at night?"* Claude classified it correctly as off-label, but also set `ae_suspected = true` ("possible lack of effect… possible intended overdose"). The keyword rules did not fire. Because either signal is enough, the enquiry went to Drug Safety. This is a false alarm, but in the safe direction: the prompt tells the model to flag when unsure, and Drug Safety would close it and pass it to the senior MI reviewer. In run 1 the same enquiry was not flagged, which shows the model is not fully deterministic on borderline wording.
+The text: *"Can I take twice the normal dose of Brenquilo if my cough is really bad at night?"* Claude classified it correctly as off-label, but also set `ae_suspected = true` ("possible lack of effect… possible intended overdose"). The keyword rules did not fire. Because either signal is enough, the enquiry went to Drug Safety. This is a false alarm, but in the safe direction: the prompt tells the model to flag when unsure, and Drug Safety would close it and pass it to the senior MI reviewer. In runs 1 and 3 the same enquiry was not flagged, which shows the model is not fully deterministic on borderline wording.
 *Decision:* not tuned away. Making the model less sensitive to pass this one case would trade a harmless false alarm for a higher risk of a missed AE.
 
 ## Limitations of this test
 
 - 26 cases is a small, hand-written set. The keyword rules and the test cases were written by the same person, so the 7/7 for the rules is an optimistic estimate for real-world wording. In a real project the rules would be tuned and validated on historical, de-identified enquiries by Drug Safety.
 - All enquiries are in English.
-- Two runs only; model output varies between runs (see OL-04). A real validation would repeat the run several times and track the spread.
+- Three runs only; model output varies between runs (see OL-04). A real validation would repeat the run several times and track the spread.
 - The workflow was built and tested on n8n Cloud with fictional data. It was not deployed.
