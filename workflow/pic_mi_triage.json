@@ -2,7 +2,7 @@
   "name": "PIC MI Triage",
   "nodes": [
     {
-      "id": "3225bd57-aaca-4c6e-a59f-a80283af3f8d",
+      "id": "2419bc1b-24e1-4272-a908-4ed8c6d57a12",
       "name": "Enquiry form",
       "type": "n8n-nodes-base.formTrigger",
       "typeVersion": 2.6,
@@ -10,7 +10,7 @@
         0,
         0
       ],
-      "webhookId": "918101cc-cc1b-4111-bf6f-78fe351f1afe",
+      "webhookId": "2b0ced88-70d0-4822-8f27-d1fed556f018",
       "parameters": {
         "formTitle": "Nordvale Pharma — Medical Information enquiry (fictional)",
         "formDescription": "Portfolio demo on a fictional company. Do not enter real personal or health data. Nothing is sent back automatically.",
@@ -99,7 +99,7 @@
       }
     },
     {
-      "id": "662b35f1-4040-4371-9450-04c91dcfe960",
+      "id": "c7665331-0acc-43ff-b57f-cdefdfc91bc3",
       "name": "When called by test",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.3,
@@ -152,7 +152,7 @@
       }
     },
     {
-      "id": "e5d88a67-291e-4585-995c-353f4304027b",
+      "id": "de8b8c2a-6a44-40f0-90b4-7cba3665d989",
       "name": "Normalize enquiry",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -166,7 +166,7 @@
       }
     },
     {
-      "id": "44e481ab-fe9a-4c6e-80f3-07fe3446207e",
+      "id": "fa26e07c-5861-47e1-a6b9-c6e0a842f546",
       "name": "Save intake (contact details)",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -283,7 +283,7 @@
       }
     },
     {
-      "id": "30f79bcd-c8f1-4801-a9f3-260f7108f967",
+      "id": "de4fcb54-de15-490b-87e1-3161c7676cdb",
       "name": "Mask personal data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -297,7 +297,7 @@
       }
     },
     {
-      "id": "d67a0dc6-26a0-42bf-aa1e-6277ee147cca",
+      "id": "86334ba7-e6d3-43dc-b499-a70a8a6a21d6",
       "name": "Check masking",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -311,7 +311,7 @@
       }
     },
     {
-      "id": "19eb60c4-36ab-40d1-96a9-a84125a87383",
+      "id": "7e41d7f0-b60b-4d24-a54c-06b79a595897",
       "name": "AE keyword rules",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -325,7 +325,7 @@
       }
     },
     {
-      "id": "fb363a1c-5ce2-447f-b81e-78d5481d3013",
+      "id": "b9262ebc-e163-46d5-8393-486492bab730",
       "name": "Clean for AI?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -357,7 +357,7 @@
       }
     },
     {
-      "id": "ca8913e6-fa41-4296-8dc6-db8ba0ae0272",
+      "id": "f3449d98-c201-48f1-9fc9-5b235e860108",
       "name": "Get response library",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -378,7 +378,7 @@
       }
     },
     {
-      "id": "74446ed2-192a-4193-975a-bac69ad62ace",
+      "id": "203834a5-5565-4967-8f74-5c13e328ad48",
       "name": "Build AI request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -392,7 +392,7 @@
       }
     },
     {
-      "id": "02411ff2-ea7e-4a11-9ed4-861359677870",
+      "id": "d77906fb-337d-4f71-abfc-69e8fe8e55d7",
       "name": "Classify with Claude",
       "type": "@n8n/n8n-nodes-langchain.anthropic",
       "typeVersion": 1,
@@ -429,7 +429,7 @@
       }
     },
     {
-      "id": "9f1b9ecd-a4fd-49fe-afa4-7782d23065ad",
+      "id": "3c249ae9-7fbd-4600-a98e-3249c93b8419",
       "name": "Route enquiry",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -439,11 +439,11 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// Route enquiry: combines the rule check and the AI result, applies the routing rules,\n// builds a draft ONLY from approved library text, and runs the code checks.\nconst WORKFLOW_VERSION = 'pic-mi-triage v1.0';\nconst CATEGORIES = ['product_information', 'adverse_event', 'product_complaint', 'off_label', 'other'];\nconst FORBIDDEN = [\n  /\\byou should (take|stop|start|increase|decrease|use|apply)\\b/i, /\\bstop taking\\b/i,\n  /\\b(increase|decrease|double|halve) (your|the) dose\\b/i, /\\bsafe for you\\b/i, /\\bcompletely safe\\b/i,\n  /\\b100% safe\\b/i, /\\bno side effects\\b/i, /\\bguarantee/i, /\\bcures?\\b/i, /\\bI recommend\\b/i,\n  /\\bwe recommend\\b/i, /\\bin my opinion\\b/i, /\\bdiagnos/i, /\\bno need to see (a|your) doctor\\b/i\n];\n\nconst e = $('AE keyword rules').first().json;\nlet library = [];\ntry { library = $('Get response library').all().map(i => i.json).filter(r => r.response_id); } catch (err) { library = []; }\nlet aiPrompt = '';\ntry { aiPrompt = $('Build AI request').first().json.ai_prompt || ''; } catch (err) { aiPrompt = ''; }\n\n// --- AI result (may be missing) ---\nfunction aiText(j) {\n  if (typeof j.merged_response === 'string') return j.merged_response;\n  if (Array.isArray(j.content)) return j.content.filter(p => p && p.type === 'text').map(p => p.text).join('');\n  if (typeof j.text === 'string') return j.text;\n  if (typeof j.output === 'string') return j.output;\n  return '';\n}\nfunction parse(text) {\n  const s = text.indexOf('{'), t = text.lastIndexOf('}');\n  if (s === -1 || t <= s) return null;\n  try { return JSON.parse(text.slice(s, t + 1)); } catch (err) { return null; }\n}\nconst aiCalled = e.pii_ok === true;\nlet ai = null, aiStatus = 'not_called';\nif (aiCalled) {\n  const raw = $input.first().json;\n  const parsed = raw.error ? null : parse(aiText(raw));\n  if (!raw.error && parsed && CATEGORIES.includes(parsed.category) && typeof parsed.ae_suspected === 'boolean') { ai = parsed; aiStatus = 'ok'; }\n  else aiStatus = raw.error ? 'ai_unavailable' : 'ai_invalid_output';\n}\nconst aeAi = !!ai && (ai.ae_suspected === true || ai.category === 'adverse_event');\nconst category = ai ? ai.category : '';\n\n// --- Checks shared by all paths ---\nconst checks = [];\n// PII check on the exact text that was sent to the AI\nconst piiPatterns = [/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i, /(?<![\\w-])\\d{6,}(?![\\w-])/];\nconst contactBits = [e.contact_name, e.contact_email].map(x => String(x || '').trim()).filter(Boolean);\nconst esc = s => s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\nconst phoneDigits = String(e.contact_phone || '').replace(/\\D/g, '');\nconst promptLeak = aiPrompt && (piiPatterns.some(re => re.test(aiPrompt))\n  || contactBits.some(v => new RegExp('\\\\b' + esc(v) + '\\\\b', 'i').test(aiPrompt))\n  || (phoneDigits.length >= 6 && aiPrompt.replace(/\\D/g, '').includes(phoneDigits)));\nchecks.push(aiCalled ? (promptLeak ? 'pii_in_ai_text:FAIL' : 'pii_in_ai_text:pass') : 'pii_in_ai_text:not_sent');\n\n// --- Routing (order matters: safety first) ---\nlet queue, reason = '', draft = '', sourceId = '', sourceVersion = '';\nif (!e.pii_ok) { queue = 'mi_human'; reason = 'pii_check_failed: ' + e.pii_findings; }\nelse if (e.ae_rule || aeAi) {\n  queue = 'drug_safety';\n  reason = 'possible adverse event: ' + [e.ae_rule ? 'rules (' + e.ae_terms + ')' : '', aeAi ? 'AI (' + (ai.ae_reason || ai.category) + ')' : ''].filter(Boolean).join(' + ');\n}\nelse if (!ai) { queue = 'mi_human'; reason = aiStatus; }\nelse if (category === 'product_complaint') { queue = 'quality'; reason = 'product complaint'; }\nelse if (category === 'off_label') { queue = 'senior_mi'; reason = 'off-label question: senior MI reviewer only'; }\nelse if (category === 'product_information') {\n  const wanted = String(ai.response_id || 'NONE').trim();\n  if (wanted === 'NONE' || !wanted) { queue = 'mi_human'; reason = 'no approved response matches'; }\n  else {\n    const current = library.filter(r => r.response_id === wanted && r.status === 'approved' && (r.product === e.product || r.product === 'ALL'));\n    if (current.length !== 1) {\n      queue = 'mi_human'; reason = 'citation_check_failed: ' + wanted + ' is not an approved response for ' + e.product;\n      checks.push('citation:FAIL');\n    } else {\n      const src = current[0];\n      draft = 'Thank you for your enquiry about ' + e.product + '.\\n\\n' + src.text + '\\n\\n' +\n        'This is general product information, not medical advice. For advice about an individual patient or your own treatment, please speak to a doctor or pharmacist.\\n\\n' +\n        '[Source: ' + src.response_id + ' v' + src.version + ']';\n      sourceId = src.response_id; sourceVersion = src.version;\n      // Citation check: the cited ID and version exist in the library and are approved\n      const citedOk = library.some(r => r.response_id === sourceId && r.version === sourceVersion && r.status === 'approved');\n      checks.push(citedOk ? 'citation:pass' : 'citation:FAIL');\n      // Forbidden phrases check on the whole draft\n      const bad = FORBIDDEN.filter(re => re.test(draft)).map(re => re.source);\n      checks.push(bad.length ? 'forbidden_phrases:FAIL' : 'forbidden_phrases:pass');\n      if (!citedOk || bad.length || promptLeak) {\n        queue = 'mi_human';\n        reason = 'draft blocked by checks: ' + checks.filter(c => c.endsWith('FAIL')).join(', ');\n        draft = ''; sourceId = ''; sourceVersion = '';\n      } else { queue = 'draft_review'; reason = 'draft from approved response'; }\n    }\n  }\n}\nelse { queue = 'mi_human'; reason = 'category other'; }\n\nreturn [{ json: {\n  enquiry_id: e.enquiry_id, case_id: e.case_id, is_test: e.is_test, created_at: $now.toISO(),\n  requester_type: e.requester_type, product: e.product,\n  queue, status: queue === 'draft_review' ? 'pending_review' : 'open',\n  category: category || 'unclassified', ai_status: aiStatus,\n  ae_rule: !!e.ae_rule, ae_ai: aeAi, ae_terms: e.ae_terms || '',\n  rationale: ai ? String(ai.rationale || '') : '', ai_response_id: ai ? String(ai.response_id || '') : '',\n  reason, masked_text: e.masked_text, masked_count: e.masked_count, ai_prompt: aiPrompt,\n  draft_text: draft, source_id: sourceId, source_version: sourceVersion, checks: checks.join(', '),\n  workflow_version: [WORKFLOW_VERSION, e.masking_version, e.rules_version, aiCalled ? 'prompt v1.0' : ''].filter(Boolean).join(' / ')\n} }];\n"
+        "jsCode": "// Route enquiry: combines the rule check and the AI result, applies the routing rules,\n// builds a draft ONLY from approved library text, and runs the code checks.\nconst WORKFLOW_VERSION = 'pic-mi-triage v1.1';\nconst CATEGORIES = ['product_information', 'adverse_event', 'product_complaint', 'off_label', 'other'];\nconst FORBIDDEN = [\n  /\\byou should (take|stop|start|increase|decrease|use|apply)\\b/i, /\\bstop taking\\b/i,\n  /\\b(increase|decrease|double|halve) (your|the) dose\\b/i, /\\bsafe for you\\b/i, /\\bcompletely safe\\b/i,\n  /\\b100% safe\\b/i, /\\bno side effects\\b/i, /\\bguarantee/i, /\\bcures?\\b/i, /\\bI recommend\\b/i,\n  /\\bwe recommend\\b/i, /\\bin my opinion\\b/i, /\\bdiagnos/i, /\\bno need to see (a|your) doctor\\b/i\n];\n\nconst e = $('AE keyword rules').first().json;\nlet library = [];\ntry { library = $('Get response library').all().map(i => i.json).filter(r => r.response_id); } catch (err) { library = []; }\nlet aiPrompt = '';\ntry { aiPrompt = $('Build AI request').first().json.ai_prompt || ''; } catch (err) { aiPrompt = ''; }\n\n// --- AI result (may be missing) ---\nfunction aiText(j) {\n  if (typeof j.merged_response === 'string') return j.merged_response;\n  if (Array.isArray(j.content)) return j.content.filter(p => p && p.type === 'text').map(p => p.text).join('');\n  if (typeof j.text === 'string') return j.text;\n  if (typeof j.output === 'string') return j.output;\n  return '';\n}\n// Pull every top-level {...} block out of the reply (the model sometimes repeats its JSON).\nfunction jsonBlocks(text) {\n  const out = []; let depth = 0, start = -1, inStr = false, esc = false;\n  for (let i = 0; i < text.length; i++) {\n    const ch = text[i];\n    if (inStr) { if (esc) esc = false; else if (ch === '\\\\') esc = true; else if (ch === '\"') inStr = false; continue; }\n    if (ch === '\"') inStr = true;\n    else if (ch === '{') { if (depth === 0) start = i; depth++; }\n    else if (ch === '}' && depth > 0) { depth--; if (depth === 0) out.push(text.slice(start, i + 1)); }\n  }\n  return out;\n}\n// Accept the reply only if every valid block agrees on the category.\n// If any block flags an adverse event, the flag wins; if blocks cite different responses, no response is used.\nfunction parse(text) {\n  const valid = [];\n  for (const b of jsonBlocks(text)) {\n    try { const o = JSON.parse(b); if (CATEGORIES.includes(o.category) && typeof o.ae_suspected === 'boolean') valid.push(o); } catch (err) {}\n  }\n  if (!valid.length) return null;\n  const anyAe = valid.some(o => o.ae_suspected === true || o.category === 'adverse_event');\n  if (new Set(valid.map(o => o.category)).size > 1) {\n    // Blocks disagree: keep any safety signal, otherwise treat the reply as invalid.\n    return anyAe ? { category: 'adverse_event', ae_suspected: true, ae_reason: 'conflicting AI blocks, one flags a possible AE', response_id: 'NONE', rationale: 'conflicting AI output', json_blocks: valid.length } : null;\n  }\n  const ids = new Set(valid.map(o => String(o.response_id || 'NONE')));\n  const last = valid[valid.length - 1];\n  return { ...last, ae_suspected: anyAe,\n    ae_reason: valid.map(o => o.ae_reason).filter(Boolean).join('; '),\n    response_id: ids.size === 1 ? last.response_id : 'NONE', json_blocks: valid.length };\n}\nconst aiCalled = e.pii_ok === true;\nlet ai = null, aiStatus = 'not_called';\nif (aiCalled) {\n  const raw = $input.first().json;\n  const parsed = raw.error ? null : parse(aiText(raw));\n  if (!raw.error && parsed) { ai = parsed; aiStatus = parsed.json_blocks > 1 ? 'ok (' + parsed.json_blocks + ' JSON blocks merged)' : 'ok'; }\n  else aiStatus = raw.error ? 'ai_unavailable' : 'ai_invalid_output';\n}\nconst aeAi = !!ai && (ai.ae_suspected === true || ai.category === 'adverse_event');\nconst category = ai ? ai.category : '';\n\n// --- Checks shared by all paths ---\nconst checks = [];\n// PII check on the exact text that was sent to the AI\nconst piiPatterns = [/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/i, /(?<![\\w-])\\d{6,}(?![\\w-])/];\nconst contactBits = [e.contact_name, e.contact_email].map(x => String(x || '').trim()).filter(Boolean);\nconst esc = s => s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\nconst phoneDigits = String(e.contact_phone || '').replace(/\\D/g, '');\nconst promptLeak = aiPrompt && (piiPatterns.some(re => re.test(aiPrompt))\n  || contactBits.some(v => new RegExp('\\\\b' + esc(v) + '\\\\b', 'i').test(aiPrompt))\n  || (phoneDigits.length >= 6 && aiPrompt.replace(/\\D/g, '').includes(phoneDigits)));\nchecks.push(aiCalled ? (promptLeak ? 'pii_in_ai_text:FAIL' : 'pii_in_ai_text:pass') : 'pii_in_ai_text:not_sent');\n\n// --- Routing (order matters: safety first) ---\nlet queue, reason = '', draft = '', sourceId = '', sourceVersion = '';\nif (!e.pii_ok) { queue = 'mi_human'; reason = 'pii_check_failed: ' + e.pii_findings; }\nelse if (e.ae_rule || aeAi) {\n  queue = 'drug_safety';\n  reason = 'possible adverse event: ' + [e.ae_rule ? 'rules (' + e.ae_terms + ')' : '', aeAi ? 'AI (' + (ai.ae_reason || ai.category) + ')' : ''].filter(Boolean).join(' + ');\n}\nelse if (!ai) { queue = 'mi_human'; reason = aiStatus; }\nelse if (category === 'product_complaint') { queue = 'quality'; reason = 'product complaint'; }\nelse if (category === 'off_label') { queue = 'senior_mi'; reason = 'off-label question: senior MI reviewer only'; }\nelse if (category === 'product_information') {\n  const wanted = String(ai.response_id || 'NONE').trim();\n  if (wanted === 'NONE' || !wanted) { queue = 'mi_human'; reason = 'no approved response matches'; }\n  else {\n    const current = library.filter(r => r.response_id === wanted && r.status === 'approved' && (r.product === e.product || r.product === 'ALL'));\n    if (current.length !== 1) {\n      queue = 'mi_human'; reason = 'citation_check_failed: ' + wanted + ' is not an approved response for ' + e.product;\n      checks.push('citation:FAIL');\n    } else {\n      const src = current[0];\n      draft = 'Thank you for your enquiry about ' + e.product + '.\\n\\n' + src.text + '\\n\\n' +\n        'This is general product information, not medical advice. For advice about an individual patient or your own treatment, please speak to a doctor or pharmacist.\\n\\n' +\n        '[Source: ' + src.response_id + ' v' + src.version + ']';\n      sourceId = src.response_id; sourceVersion = src.version;\n      // Citation check: the cited ID and version exist in the library and are approved\n      const citedOk = library.some(r => r.response_id === sourceId && r.version === sourceVersion && r.status === 'approved');\n      checks.push(citedOk ? 'citation:pass' : 'citation:FAIL');\n      // Forbidden phrases check on the whole draft\n      const bad = FORBIDDEN.filter(re => re.test(draft)).map(re => re.source);\n      checks.push(bad.length ? 'forbidden_phrases:FAIL' : 'forbidden_phrases:pass');\n      if (!citedOk || bad.length || promptLeak) {\n        queue = 'mi_human';\n        reason = 'draft blocked by checks: ' + checks.filter(c => c.endsWith('FAIL')).join(', ');\n        draft = ''; sourceId = ''; sourceVersion = '';\n      } else { queue = 'draft_review'; reason = 'draft from approved response'; }\n    }\n  }\n}\nelse { queue = 'mi_human'; reason = 'category other'; }\n\nreturn [{ json: {\n  enquiry_id: e.enquiry_id, case_id: e.case_id, is_test: e.is_test, created_at: $now.toISO(),\n  requester_type: e.requester_type, product: e.product,\n  queue, status: queue === 'draft_review' ? 'pending_review' : 'open',\n  category: category || 'unclassified', ai_status: aiStatus,\n  ae_rule: !!e.ae_rule, ae_ai: aeAi, ae_terms: e.ae_terms || '',\n  rationale: ai ? String(ai.rationale || '') : '', ai_response_id: ai ? String(ai.response_id || '') : '',\n  reason, masked_text: e.masked_text, masked_count: e.masked_count, ai_prompt: aiPrompt,\n  draft_text: draft, source_id: sourceId, source_version: sourceVersion, checks: checks.join(', '),\n  workflow_version: [WORKFLOW_VERSION, e.masking_version, e.rules_version, aiCalled ? 'prompt v1.0' : ''].filter(Boolean).join(' / ')\n} }];\n"
       }
     },
     {
-      "id": "817c5352-2bcd-4934-bfb4-4a9dac88ad0f",
+      "id": "0975f9f0-dc07-4464-8185-ab3b4095320b",
       "name": "Save to queue",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -670,7 +670,7 @@
       }
     },
     {
-      "id": "824529c9-f099-429e-b122-a32c5b99dda5",
+      "id": "0b3e1823-703f-43e0-9328-4789c5e58b8f",
       "name": "Write audit log",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -787,7 +787,7 @@
       }
     },
     {
-      "id": "f60cb2d1-4177-4e1a-ac79-c9b9a207ae6a",
+      "id": "5e0bcae0-2ee5-4799-8b0b-c7ede470c747",
       "name": "Return result",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -801,7 +801,7 @@
       }
     },
     {
-      "id": "55208f6b-9c96-4095-8749-0e203a0327d0",
+      "id": "c1a9c908-352c-4708-8000-1584b6fac8d2",
       "name": "Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,

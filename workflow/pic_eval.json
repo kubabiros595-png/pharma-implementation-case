@@ -2,7 +2,7 @@
   "name": "PIC Eval",
   "nodes": [
     {
-      "id": "03980195-6936-4ac4-bdb9-506674a9ae2d",
+      "id": "cea50138-e934-4cd6-ba27-60a8dd3aca9a",
       "name": "Run test",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
@@ -13,7 +13,7 @@
       "parameters": {}
     },
     {
-      "id": "eee8b114-14a1-45e2-b38e-23d7f1880324",
+      "id": "6edac7e4-d478-44a3-98bc-b4312a6b9e4e",
       "name": "Get test cases",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -33,7 +33,7 @@
       }
     },
     {
-      "id": "08b75279-5ddf-4fbb-a1ca-657ff5fe4443",
+      "id": "017735ae-84d9-46ce-bf1a-08ef00363e85",
       "name": "Run triage on each case",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
@@ -153,7 +153,7 @@
       }
     },
     {
-      "id": "55170fff-6a51-4a3a-9ba6-c9971d218eda",
+      "id": "1428014f-2e41-4f63-9747-a4773ff6e9b6",
       "name": "Get response library",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -174,7 +174,7 @@
       }
     },
     {
-      "id": "d092d5a8-055a-4155-91cd-615110537931",
+      "id": "461c18b4-aeb9-4fba-b9c8-31c16245d077",
       "name": "Score cases",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -188,7 +188,7 @@
       }
     },
     {
-      "id": "07b6a1b3-c362-4938-ae54-5841aeab9a27",
+      "id": "8a8c4c62-029c-4b1b-96ea-bf2e2c91d0ae",
       "name": "Save case results",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -435,7 +435,7 @@
       }
     },
     {
-      "id": "73513f1d-0530-4f0e-bea0-e2fd51155df2",
+      "id": "2cad8205-1e2a-40e5-979f-ac3876253d34",
       "name": "Build review decisions",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -450,7 +450,7 @@
       "executeOnce": true
     },
     {
-      "id": "b8152fa7-6e41-41b9-bf5b-88d42a8dc5a0",
+      "id": "843877b6-5d24-4762-91b2-94abc8fff1df",
       "name": "Run review",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
@@ -500,7 +500,7 @@
       }
     },
     {
-      "id": "ad1198d2-2067-4c95-8f0a-c68250da5c2c",
+      "id": "4b366f59-9ceb-4676-b03a-2ecfcac9ab0c",
       "name": "Get audit log",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -521,7 +521,7 @@
       }
     },
     {
-      "id": "05b3ea35-1ac4-4458-be1a-165a9874f1e0",
+      "id": "d2a1313d-538f-450c-9c8c-32c95d9fa200",
       "name": "Final score",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -535,7 +535,7 @@
       }
     },
     {
-      "id": "2ef19033-9107-4076-9267-027ea489aa36",
+      "id": "98a7cea1-0089-4818-ac17-d5c8dfc3ece6",
       "name": "Save run summary",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -822,7 +822,7 @@
       }
     },
     {
-      "id": "e319a703-c777-463d-aa59-411f81ee6732",
+      "id": "280b4ed5-0e6b-4a75-84e9-0d0a2b619805",
       "name": "Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
